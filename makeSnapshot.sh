@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
+# Version 1.7 - Variables and if statements added so these things can be chosen: processIsRunning file directory, protocol: rsync or just directory, rsync hostname, username & passwordfile for rsync protocol and checksum yes or no.
 # Version 1.6 - Modified "overlap time" so it just uses the same "duration" function and modified "duration" function, so it doesn't say "0 hours, 0 minutes, 12 seconds" - it now removes the zeros and says "12 seconds".
 # Version 1.5 - Added "-n" to some of the "echo" commands, so the "done" appears on the same line.
 # Version 1.4 - moved "customizable variables" back to the top & echo'ing the duration of each rm, mv, copy and the whole rsync process with start_time & end_time variables.
@@ -8,10 +9,8 @@
 # Version 1.2 - "processIsRunning" file created when running and while loop created so script doesn't overlap.
 # Version 1.1 - rsync protocol added.
 # Version 1.0 - Original.
-# Written by Richard Hobbs
+# Written by Richard Hobbs (fishsponge)
 # http://www.rhobbs.co.uk/
-
-echo -n "Start: "; date
 
 ################################
 # CUSTOMIZABLE VARIABLES BELOW #
@@ -22,6 +21,21 @@ echo -n "Start: "; date
 # the original data at *least*.
 snapdir="/snapshots"
 rsyncsnapdir="snapshots"
+
+# rsync protocol OR directory -> directory
+protocol="rsync"
+#protocol="directory"
+
+# rsync login details
+rsynchostname="nas"
+rsyncusername="username"
+rsyncpasswordfile="/root/password"
+
+# rsync checksums? "yes" or "no"
+checksums="no"
+
+# directory for "makeSnapshotProcessIsRunning" file
+pirfiledir="/root/scripts/makeSnapshots"
 
 # Source directories to put into the snapshots
 # NOTE: Do *NOT* include the snapshot directory.
@@ -53,9 +67,12 @@ daytorun=2
 
 
 
+
 ################################
 # DO NOT EDIT BELOW THIS LINE  #
 ################################
+
+echo -n "Start: "; date
 
 duration ()
 {
@@ -78,7 +95,7 @@ duration ()
 start_time=`date +%s`
 while [ 1 ]
 do
-    if [ -f "/root/scripts/makeSnapshots/processIsRunning" ]
+    if [ -f "${pirfiledir}/makeSnapshotProcessIsRunning" ]
     then
         echo "Another \"makeSnapshot\" process is currently running (`date`) so waiting for it to finish..."; sleep 257
     else
@@ -90,7 +107,7 @@ echo "Overlap took `duration`."
 
 echo -n "Snapshot creation starts: "; date
 
-touch /root/scripts/makeSnapshots/processIsRunning
+touch ${pirfiledir}/makeSnapshotProcessIsRunning
 
 if [ ! -d ${snapdir} ]; then echo "${snapdir} doesn't exist.\nPlease check \"\$snapdir=\" in the script or run \"mkdir ${snapdir}\"" >&2; exit 1; fi
 
@@ -166,16 +183,40 @@ start_time=`date +%s`
 for dir in "${dirs[@]}"
 do
   echo "Rsyncing \"${dir}\"..."
-  #rsync -avS --delete ${dir}/ ${snapdir}/daily.0/${dir}/
-  #rsync -avSc --delete --password-file=/root/password ${dir}/ username@nas::${rsyncsnapdir}/daily.0/${dir}/
-  rsync -avS --delete --password-file=/root/password ${dir}/ username@nas::${rsyncsnapdir}/daily.0/${dir}/
+  if [ ${protocol} = "rsync" ]
+  then
+    if [ ${checksums} = "yes" ]
+    then
+      rsync -avSc --delete --password-file=${rsyncpasswordfile} ${dir}/ ${rsyncusername}@${rsynchostname}::${rsyncsnapdir}/daily.0/${dir}/
+    else
+      rsync -avS --delete --password-file=${rsyncpasswordfile} ${dir}/ ${rsyncusername}@${rsynchostname}::${rsyncsnapdir}/daily.0/${dir}/
+    fi
+  else
+    if [ ${protocol} = "directory" ]
+    then
+      if [ ${checksums} = "yes" ]
+      then
+        rsync -avSc --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+      else
+        rsync -avS --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+      fi
+    else
+      echo "No protocol specified, so dropping rsync protocol and using directory..."
+      if [ ${checksums} = "yes" ]
+      then
+        rsync -avSc --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+      else
+        rsync -avS --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+      fi
+    fi
+  fi
 done
 end_time=`date +%s`
 echo "Entire rsync process done (`duration`)"
 
 touch ${snapdir}/daily.0
 
-rm /root/scripts/makeSnapshots/processIsRunning
+rm ${pirfiledir}/makeSnapshotProcessIsRunning
 
 echo -n "End: "; date
 
