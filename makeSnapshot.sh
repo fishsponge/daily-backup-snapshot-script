@@ -1,11 +1,25 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
-# Version 1.1
+# Version 1.0 - Original
+# Version 1.1 - rsync protocol added
+# Version 1.2 - "processIsRunning" file and while loop created so script doesn't overlap
 # Written by Richard Hobbs
 # http://www.rhobbs.co.uk/
 
+while [ 1 ]
+do
+    if [ -f "/root/scripts/makeSnapshots/processIsRunning" ]
+    then
+        echo "makeSnapshot is currently running (`date`) so waiting for it to finish..."; sleep 257
+    else
+        echo "makeSnapshot is not currently running, so starting the process..."; break
+    fi
+done
+
 echo -n "Start: "; date
+
+touch /root/scripts/makeSnapshots/processIsRunning
 
 ################################
 # CUSTOMIZABLE VARIABLES BELOW #
@@ -129,6 +143,8 @@ do
 done
 
 touch ${snapdir}/daily.0
+
+rm /root/scripts/makeSnapshots/processIsRunning
 
 echo -n "End: "; date
 
