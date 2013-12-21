@@ -1,23 +1,34 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
-# Version 1.0 - Original
-# Version 1.1 - rsync protocol added
-# Version 1.2 - "processIsRunning" file and while loop created so script doesn't overlap
+# Version 1.3 - echo comments modified, start date added to beginning, added overlap time being echo'd and comments being echo'd describing snapshots being deleted, moved and created.
+# Version 1.2 - "processIsRunning" file created when running and while loop created so script doesn't overlap.
+# Version 1.1 - rsync protocol added.
+# Version 1.0 - Original.
 # Written by Richard Hobbs
 # http://www.rhobbs.co.uk/
+
+echo -n "Start: "; date
+
+overlap_start_time=`date +%s`
 
 while [ 1 ]
 do
     if [ -f "/root/scripts/makeSnapshots/processIsRunning" ]
     then
-        echo "makeSnapshot is currently running (`date`) so waiting for it to finish..."; sleep 257
+        echo "Another \"makeSnapshot\" process is currently running (`date`) so waiting for it to finish..."; sleep 257
     else
-        echo "makeSnapshot is not currently running, so starting the process..."; break
+        echo "makeSnapshot has finished (or is not running), so starting the process..."; break
     fi
 done
 
-echo -n "Start: "; date
+overlap_end_time=`date +%s`
+overlap_hours=`echo $(( (($overlap_end_time - $overlap_start_time) / 60) / 60 ))`
+overlap_minutes=`echo $(( (($overlap_end_time - $overlap_start_time) / 60) - ($overlap_hours * 60) ))`
+overlap_seconds=`echo $(( ($overlap_end_time - $overlap_start_time) - ($overlap_minutes * 60) - ($overlap_hours * 60 * 60) ))`
+echo "Overlap took $overlap_hours hours, $overlap_minutes minutes, $overlap_seconds seconds."
+
+echo -n "Snapshot creation starts: "; date
 
 touch /root/scripts/makeSnapshots/processIsRunning
 
@@ -76,13 +87,13 @@ if [ ! -d ${snapdir}/daily.0 ]; then echo "\"${snapdir}/daily.0/\" directory doe
 # DAILY
 
 minus1=`expr ${maxdaily} - 1`
-if [ -d ${snapdir}/daily.${minus1} ]; then rm -rf ${snapdir}/daily.${minus1}; fi
+if [ -d ${snapdir}/daily.${minus1} ]; then echo "Removing \"daily.${minus1}\"..."; rm -rf ${snapdir}/daily.${minus1}; echo " done"; fi
 for ((ss=${minus1}; ss >= 2; ss--))
 do
   ssminus1=`expr ${ss} - 1`
-  if [ -d ${snapdir}/daily.${ssminus1} ]; then mv ${snapdir}/daily.${ssminus1} ${snapdir}/daily.${ss}; fi
+  if [ -d ${snapdir}/daily.${ssminus1} ]; then echo "Moving \"daily.${ssminus1}\" to \"daily.${ss}\"..."; mv ${snapdir}/daily.${ssminus1} ${snapdir}/daily.${ss}; echo " done"; fi
 done
-if [ -d ${snapdir}/daily.0 ]; then cp -al ${snapdir}/daily.0 ${snapdir}/daily.1; fi
+if [ -d ${snapdir}/daily.0 ]; then echo "Synchronizing \"daily.0\" with \"daily.1\"..."; cp -al ${snapdir}/daily.0 ${snapdir}/daily.1; echo " done"; fi
 
 # WEEKLY
 
@@ -90,13 +101,13 @@ if [ "${doweekly}" == "yes" ]
 then
 
   minus1=`expr ${maxweekly} - 1`
-  if [ -d ${snapdir}/weekly.${minus1} ]; then rm -rf ${snapdir}/weekly.${minus1}; fi
+  if [ -d ${snapdir}/weekly.${minus1} ]; then echo "Removing \"weekly.${minus1}\"..."; rm -rf ${snapdir}/weekly.${minus1}; echo " done"; fi
   for ((ss=${minus1}; ss >= 1; ss--))
   do
     ssminus1=`expr ${ss} - 1`
-    if [ -d ${snapdir}/weekly.${ssminus1} ]; then mv ${snapdir}/weekly.${ssminus1} ${snapdir}/weekly.${ss}; fi
+    if [ -d ${snapdir}/weekly.${ssminus1} ]; then echo "Moving \"weekly.${ssminus1}\" to \"weekly.${ss}\"..."; mv ${snapdir}/weekly.${ssminus1} ${snapdir}/weekly.${ss}; echo " done"; fi
   done
-  if [ -d ${snapdir}/daily.0 ]; then cp -al ${snapdir}/daily.0 ${snapdir}/weekly.0; fi
+  if [ -d ${snapdir}/daily.0 ]; then echo "Synchronizing \"daily.0\" with \"weekly.0\"..."; cp -al ${snapdir}/daily.0 ${snapdir}/weekly.0; echo " done"; fi
 
 fi
 
@@ -106,13 +117,13 @@ if [ "${domonthly}" == "yes" ]
 then
 
   minus1=`expr ${maxmonthly} - 1`
-  if [ -d ${snapdir}/monthly.${minus1} ]; then rm -rf ${snapdir}/monthly.${minus1}; fi
+  if [ -d ${snapdir}/monthly.${minus1} ]; then echo "Removing \"monthly.${minus1}\"..."; rm -rf ${snapdir}/monthly.${minus1}; echo " done"; fi
   for ((ss=${minus1}; ss >= 1; ss--))
   do
     ssminus1=`expr ${ss} - 1`
-    if [ -d ${snapdir}/monthly.${ssminus1} ]; then mv ${snapdir}/monthly.${ssminus1} ${snapdir}/monthly.${ss}; fi
+    if [ -d ${snapdir}/monthly.${ssminus1} ]; then echo "Moving \"monthly.${ssminus1}\" to \"monthly.${ss}\"..."; mv ${snapdir}/monthly.${ssminus1} ${snapdir}/monthly.${ss}; echo " done"; fi
   done
-  if [ -d ${snapdir}/daily.0 ]; then cp -al ${snapdir}/daily.0 ${snapdir}/monthly.0; fi
+  if [ -d ${snapdir}/daily.0 ]; then echo "Synchronizing \"daily.0\" with \"monthly.0\"..."; cp -al ${snapdir}/daily.0 ${snapdir}/monthly.0; echo " done"; fi
 
 fi
 
@@ -122,13 +133,13 @@ if [ "${doyearly}" == "yes" ]
 then
 
   minus1=`expr ${maxyearly} - 1`
-  if [ -d ${snapdir}/yearly.${minus1} ]; then rm -rf ${snapdir}/yearly.${minus1}; fi
+  if [ -d ${snapdir}/yearly.${minus1} ]; then echo "Removing \"yearly.${minus1}\"..."; rm -rf ${snapdir}/yearly.${minus1}; echo " done"; fi
   for ((ss=${minus1}; ss >= 1; ss--))
   do
     ssminus1=`expr ${ss} - 1`
-    if [ -d ${snapdir}/yearly.${ssminus1} ]; then mv ${snapdir}/yearly.${ssminus1} ${snapdir}/yearly.${ss}; fi
+    if [ -d ${snapdir}/yearly.${ssminus1} ]; then echo "Moving \"yearly.${ssminus1}\" to \"yearly.${ss}\"..."; mv ${snapdir}/yearly.${ssminus1} ${snapdir}/yearly.${ss}; echo " done"; fi
   done
-  if [ -d ${snapdir}/daily.0 ]; then cp -al ${snapdir}/daily.0 ${snapdir}/yearly.0; fi
+  if [ -d ${snapdir}/daily.0 ]; then echo "Synchronizing \"daily.0\" with \"yearly.0\"..."; cp -al ${snapdir}/daily.0 ${snapdir}/yearly.0; echo " done"; fi
 
 fi
 
