@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
-# Version 1.0
+# Version 1.1
 # Written by Richard Hobbs
 # http://www.rhobbs.co.uk/
 
@@ -15,6 +15,7 @@ echo -n "Start: "; date
 # NOTE: This will contain 1 complete copy of
 # the original data at *least*.
 snapdir="/snapshots"
+rsyncsnapdir="snapshots"
 
 # Source directories to put into the snapshots
 # NOTE: Do *NOT* include the snapshot directory.
@@ -122,7 +123,9 @@ fi
 for dir in "${dirs[@]}"
 do
   echo "Rsyncing \"${dir}\"..."
-  rsync -avS --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+  #rsync -avS --delete ${dir}/ ${snapdir}/daily.0/${dir}/
+  #rsync -avSc --delete --password-file=/root/password ${dir}/ username@nas::${rsyncsnapdir}/daily.0/${dir}/
+  rsync -avS --delete --password-file=/root/password ${dir}/ username@nas::${rsyncsnapdir}/daily.0/${dir}/
 done
 
 touch ${snapdir}/daily.0
