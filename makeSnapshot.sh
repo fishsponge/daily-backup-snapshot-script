@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
+# Version 1.6 - Modified "overlap time" so it just uses the same "duration" function and modified "duration" function, so it doesn't say "0 hours, 0 minutes, 12 seconds" - it now removes the zeros and says "12 seconds".
 # Version 1.5 - Added "-n" to some of the "echo" commands, so the "done" appears on the same line.
 # Version 1.4 - moved "customizable variables" back to the top & echo'ing the duration of each rm, mv, copy and the whole rsync process with start_time & end_time variables.
 # Version 1.3 - echo comments modified, start date added to beginning, added overlap time being echo'd and comments being echo'd describing snapshots being deleted, moved and created.
@@ -61,11 +62,20 @@ duration ()
     hours=`echo $(( (($end_time - $start_time) / 60) / 60 ))`
     minutes=`echo $(( (($end_time - $start_time) / 60) - ($hours * 60) ))`
     seconds=`echo $(( ($end_time - $start_time) - ($minutes * 60) - ($hours * 60 * 60) ))`
-    echo "$hours hours, $minutes minutes, $seconds seconds."
+    if [ $hours != 0 ]
+    then
+        echo "$hours hours, $minutes minutes, $seconds seconds"
+    else
+        if [ $minutes != 0 ]
+        then
+            echo "$minutes minutes, $seconds seconds"
+        else
+            echo "$seconds seconds"
+        fi
+    fi
 }
 
-overlap_start_time=`date +%s`
-
+start_time=`date +%s`
 while [ 1 ]
 do
     if [ -f "/root/scripts/makeSnapshots/processIsRunning" ]
@@ -75,12 +85,8 @@ do
         echo "makeSnapshot has finished (or is not running), so starting the process..."; break
     fi
 done
-
-overlap_end_time=`date +%s`
-overlap_hours=`echo $(( (($overlap_end_time - $overlap_start_time) / 60) / 60 ))`
-overlap_minutes=`echo $(( (($overlap_end_time - $overlap_start_time) / 60) - ($overlap_hours * 60) ))`
-overlap_seconds=`echo $(( ($overlap_end_time - $overlap_start_time) - ($overlap_minutes * 60) - ($overlap_hours * 60 * 60) ))`
-echo "Overlap took $overlap_hours hours, $overlap_minutes minutes, $overlap_seconds seconds."
+end_time=`date +%s`
+echo "Overlap took `duration`."
 
 echo -n "Snapshot creation starts: "; date
 
