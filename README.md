@@ -7,6 +7,8 @@ This "makeSnapshots.sh" script enables you to go back in time to find an old or 
 
 This script is designed to run once per day, it can write snapshots to a separate directory (local or NFS) or via the rsync protocol (only if you also have the remote partition mounted over NFS locally as well, for the "rm" and "mv" commands to run) and for the first time it runs it initially makes an entire copy of your original data which it then makes a copy of and updates daily.
 
+Version 1.9 - "Another "makeSnapshot" process is currently running" comment only being echo'd once so it doesn't get repeated constantly.
+
 Version 1.8 - "echo" commands put in so there's blank lines in between certain outputs.
 
 Version 1.7 - Variables and if statements added so these things can be chosen: processIsRunning file directory, protocol: rsync or just directory, rsync hostname, username & passwordfile for rsync protocol and checksum yes or no.
