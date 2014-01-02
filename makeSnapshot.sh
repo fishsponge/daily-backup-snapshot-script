@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Daily, Weekly, Monthly & Yearly Snapshots
+# Version 1.9 - "Another "makeSnapshot" process is currently running" comment only being echo'd once so it doesn't get repeated constantly.
 # Version 1.8 - "echo" commands put in so there's blank lines in between certain outputs.
 # Version 1.7 - Variables and if statements added so these things can be chosen: processIsRunning file directory, protocol: rsync or just directory, rsync hostname, username & passwordfile for rsync protocol and checksum yes or no.
 # Version 1.6 - Modified "overlap time" so it just uses the same "duration" function and modified "duration" function, so it doesn't say "0 hours, 0 minutes, 12 seconds" - it now removes the zeros and says "12 seconds".
@@ -99,7 +100,12 @@ while [ 1 ]
 do
     if [ -f "${pirfiledir}/makeSnapshotProcessIsRunning" ]
     then
-        echo "Another \"makeSnapshot\" process is currently running (`date`) so waiting for it to finish..."; sleep 257
+        if [ "${pirStatementEchod}" != "yes" ]
+        then
+            echo "Another \"makeSnapshot\" process is currently running (`date`) so waiting for it to finish..."; sleep 257
+            pirStatementEchod="yes"
+        fi
+        sleep 257
     else
         echo "makeSnapshot has finished (or is not running), so starting the process..."; break
     fi
